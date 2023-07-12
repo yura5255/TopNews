@@ -1,3 +1,4 @@
+using TopNews.Core;
 using TopNews.Infrastructure;
 using TopNews.Infrastructure.Initializers;
 
@@ -9,6 +10,9 @@ string connStr = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext(connStr);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Add core services
+builder.Services.AddCoreServices();
 
 // Add Infastracture services
 builder.Services.AddInfrastructureServices();
