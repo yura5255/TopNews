@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TopNews.Core.DTOs.User;
+using TopNews.Core.Entities.User;
 using TopNews.Core.Services;
 using TopNews.Core.Validation.User;
 
@@ -10,9 +12,11 @@ namespace TopNews.Web.Controllers
     public class DashboardController : Controller
     {
         private readonly UserService _userService;
-        public DashboardController(UserService userService)
+        private readonly SignInManager<AppUser> _signInManager;
+        public DashboardController(UserService userService, SignInManager<AppUser> signInManager)
         {
             _userService = userService;
+            _signInManager = signInManager;
         }
 
         public IActionResult Index()
@@ -43,6 +47,12 @@ namespace TopNews.Web.Controllers
             }
             ViewBag.AuthError = validationResult.Errors[0];
             return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager
         }
     }
 }
