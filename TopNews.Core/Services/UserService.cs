@@ -18,6 +18,15 @@ namespace TopNews.Core.Services
             _userManager = userManager;
             _signInManager = signInManager;
         }
+        public async Task<ServiceResponse> SingOutUserAsync()
+        {
+            await _signInManager.SignOutAsync();
+            return new ServiceResponse
+            {
+                Success = true,
+                Message = "Singed out successfully"
+            };
+        }
         public async Task<ServiceResponse> LoginUserAsync(DTOUserLogin model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);

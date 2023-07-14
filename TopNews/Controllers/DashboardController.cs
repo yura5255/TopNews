@@ -52,7 +52,8 @@ namespace TopNews.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Logout()
         {
-            await _signInManager
+            await _userService.SingOutUserAsync();
+            return RedirectToAction(nameof(Login));
         }
     }
 }
