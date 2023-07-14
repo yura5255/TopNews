@@ -26,6 +26,11 @@ namespace TopNews.Web.Controllers
         [AllowAnonymous] //GET
         public IActionResult Login()
         {
+            var user = HttpContext.User.Identity.IsAuthenticated;
+            if (user)
+            {
+                return RedirectToAction(nameof(Index));
+            }
             return View();
         }
         [AllowAnonymous] //POST
