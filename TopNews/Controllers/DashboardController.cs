@@ -5,6 +5,7 @@ using TopNews.Core.DTOs.User;
 using TopNews.Core.Entities.User;
 using TopNews.Core.Services;
 using TopNews.Core.Validation.User;
+using TopNews.Web.Models.ViewModel;
 
 namespace TopNews.Web.Controllers
 {
@@ -65,6 +66,40 @@ namespace TopNews.Web.Controllers
         {
             var result = await _userService.GetAllAsync();
             return View(result.Payload);
+        }
+
+        public async Task<IActionResult> Profile(string Id)
+        {
+            var result = await _userService.GetByIdAsync(Id);
+            if (result.Success)
+            {
+                UpdateProfileVM profile = new UpdateProfileVM()
+                {
+                    UserInfo = (UpdateUserDto) result.Payload
+                };
+                return View(profile);
+            }
+            return View(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Profile(UpdatePasswordDto model)
+        {
+            var validator = new UpdatePasswordValidation();
+            var validationResult = await validator.ValidateAsync(model);
+            if(validationResult.IsValid)
+            {
+                var result = await _userService.UpdatePasswordASync(model);
+                if (result.Success)
+                {
+                    return RedirectToAction(nameof(Login));
+                }
+                ViewBag.UpdatePasswordError = result.Payload;
+                return View();
+            }
+            ViewBag.UpdatePasswordError = validationResult.Errors[0];
+            return View();
         }
     }
 }

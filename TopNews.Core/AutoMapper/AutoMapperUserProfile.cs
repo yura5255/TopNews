@@ -14,6 +14,7 @@ namespace TopNews.Core.AutoMapper
         public AutoMapperUserProfile()
         {
             CreateMap<UserDTO, AppUser>().ReverseMap();
+            CreateMap<UpdateUserDto, AppUser>().ReverseMap();
         }
     }
 }

@@ -95,5 +95,60 @@ namespace TopNews.Core.Services
                 };
             }
         }
+
+        public async Task<ServiceResponse> GetByIdAsync(string Id)
+        {
+            var user = await _userManager.FindByIdAsync(Id);
+            if (user == null)
+            {
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "User or password incorrect!"
+                };
+            }
+            var mappedUser = _mapper.Map<AppUser, UpdateUserDto>(user);
+            return new ServiceResponse
+            {
+                Success = true,
+                Message = "User succesfully loaded!",
+                Payload = mappedUser
+            };
+        }
+
+        public async Task<ServiceResponse> UpdatePasswordASync(UpdatePasswordDto model)
+        {
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null)
+            {
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "User or password incorrect!"
+                };
+            }
+            IdentityResult result = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+            if(result.Succeeded)
+            {
+                await _signInManager.SignOutAsync(); 
+                return new ServiceResponse
+                {
+                    Success = true,
+                    Message = "Password succefully updated!"
+                };
+            }
+            List<IdentityError> errorList = result.Errors.ToList();
+            string errors = "";
+            foreach (var error in errorList)
+            {
+                errors = error + error.Description.ToString();
+            }
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = "Error",
+                Payload = errors
+            };
+        }
     }
 }
