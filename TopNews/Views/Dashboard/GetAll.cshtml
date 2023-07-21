@@ -1,8 +1,18 @@
 ﻿@using Microsoft.AspNetCore.Identity;
 @using TopNews.Core.DTOs.User;
-
+@using TopNews.Core.Entities.User;
+@inject UserManager<AppUser> UserManager
 @model List<UserDTO>
-
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var email = await UserManager.GetEmailAsync(user);
+}
+@{
+    <!-- DataTables -->
+    <link rel="stylesheet" href="~/assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/assets/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+}
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
@@ -42,6 +52,11 @@
                                         <th>Email confirmed</th>
                                         <th>Lockout</th>
                                         <th>Role</th>
+                                        @if (@User.IsInRole("Administrator"))
+                                        {
+                                            <th>Edit</th>
+                                            <th>Delete</th>
+                                        }
 
                                     </tr>
                                 </thead>
@@ -55,6 +70,11 @@
                                             <td>@item.EmailConfirmed</td>
                                             <td>@item.LockedOut</td>
                                             <td> @item.Role</td>
+                                            @if (@User.IsInRole("Administrator") && item.Email != email)
+                                            {
+                                                <td><a asp-controller="Dashboard" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-block btn-warning btn-sm">Edit</a></td>
+                                                <td><a asp-controller="Dashboard" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-block btn-danger btn-sm">Delete</a></td>
+                                            }
                                         </tr>
                                     }
                                 </tbody>

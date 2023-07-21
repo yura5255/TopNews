@@ -39,6 +39,14 @@ namespace TopNews.Infrastructure.Initializers
                             NormalizedName = "ADMINISTRATOR"
                         }
                     );
+
+                    context.Roles.AddAsync(
+                       new IdentityRole()
+                       {
+                           Name = "User",
+                           NormalizedName = "USER"
+                       }
+                   );
                     await context.SaveChangesAsync();
 
                     IdentityResult adminResult = userManager.CreateAsync(admin, "Qwerty-1").Result;
