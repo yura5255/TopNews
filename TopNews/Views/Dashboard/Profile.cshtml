@@ -48,7 +48,7 @@
                 <!-- /.card-header -->
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-5 offset-3">
+                        <div class="col-md-6">
                             <div class="card card-danger">
                                 <div class="card-header">
                                     <h3 class="card-title">Update password</h3>
@@ -59,7 +59,7 @@
                                 {
                                     <span class="text-danger mt-3">@ViewBag.UpdatePasswordError</span>
                                 }
-                                <form method="post" asp-action="Profile">
+                                <form method="post" asp-action="UpdatePassword">
                                     <div class="card-body">
                                         <input type="hidden" name="Id" asp-for="=@user.Id" value=@user.Id />
                                         <div class="form-group">
@@ -83,8 +83,49 @@
                             </div>
                             <hr />
                         </div>
+                        <div class="col-md-6">
+                            <!-- general form elements -->
+                            <div class="card card-warning">
+                                <div class="card-header">
+                                    <h3 class="card-title">User profile</h3>
+                                </div>
+                                <!-- /.card-header -->
+                                <!-- form start -->
+                                @if (@ViewBag.UpdateUserError != null)
+                                {
+                                    <span class="text-danger mt-3">@ViewBag.UpdateUserError</span>
+                                }
+                                <form method="post" asp-action="UpdateUserInfo">
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail1">First name</label>
+                                            <input name="FirstName" asp-for="@Model.UserInfo.FirstName" type="text" class="form-control" id="exampleInputEmail1" placeholder="name" value="@user.FirstName" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="exampleInputPassword1">Last name</label>
+                                            <input name="LastName" asp-for="@Model.UserInfo.LastName" type="text" class="form-control" id="exampleInputPassword1" placeholder="surname" value="@user.LastName" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="exampleInputPassword1">Email</label>
+                                            <input name="Email" asp-for="@Model.UserInfo.Email" type="text" class="form-control" id="exampleInputPassword1" placeholder="email" value="@user.Email" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="exampleInputPassword1">Phone number</label>
+                                            <input name="PhoneNumber" asp-for="@Model.UserInfo.PhoneNumber" type="text" class="form-control" id="exampleInputPassword1" placeholder="phone" value="@user.PhoneNumber" required>
+                                        </div>
+                                    </div>
+                                    <!-- /.card-body -->
+                                    <div class="card-footer">
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <!-- /.card -->
+                            <!-- /.card -->
+                        </div>
                     </div>
                 </div>
+
                 <!-- /.card -->
             </div>
             <!-- /.row -->

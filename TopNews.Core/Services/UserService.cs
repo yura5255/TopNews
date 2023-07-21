@@ -150,5 +150,76 @@ namespace TopNews.Core.Services
                 Payload = errors
             };
         }
+
+        public async Task<ServiceResponse> UpdateUserInfoAsync(UpdateUserDto model)
+        {
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null)
+            {
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "Something gone wrong!"
+                };
+            }
+            IdentityResult result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                await _signInManager.SignOutAsync();
+                return new ServiceResponse
+                {
+                    Success = true,
+                    Message = "User succesfully updated!"
+                };
+            }
+            List<IdentityError> errorList = result.Errors.ToList();
+            string errors = "";
+            foreach (var error in errorList)
+            {
+                errors = error + error.Description.ToString();
+            }
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = "Error",
+                Payload = errors
+            };
+        }
+
+        public async Task<ServiceResponse> CreateNewUserAsync(CreateUserDto model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null)
+            {
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "User already exists!"
+                };
+            }
+            AppUser mappedUser = _mapper.Map<CreateUserDto, AppUser>(model);
+            IdentityResult result = await _userManager.CreateAsync(mappedUser, model.Password);
+            if (result.Succeeded)
+            {
+                _userManager.AddToRoleAsync(mappedUser, model.Role).Wait();
+                return new ServiceResponse
+                {
+                    Success = true,
+                    Message = "User succesfully created!"
+                };
+            }
+            List<IdentityError> errorList = result.Errors.ToList();
+            string errors = "";
+            foreach (var error in errorList)
+            {
+                errors = error + error.Description.ToString();
+            }
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = "Error",
+                Payload = errors
+            };
+        }
     }
 }

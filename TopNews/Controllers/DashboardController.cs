@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TopNews.Core.DTOs.User;
@@ -84,7 +85,7 @@ namespace TopNews.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Profile(UpdatePasswordDto model)
+        public async Task<IActionResult> UpdatePassword(UpdatePasswordDto model)
         {
             var validator = new UpdatePasswordValidation();
             var validationResult = await validator.ValidateAsync(model);
@@ -96,7 +97,51 @@ namespace TopNews.Web.Controllers
                     return RedirectToAction(nameof(Login));
                 }
                 ViewBag.UpdatePasswordError = result.Payload;
-                return View();
+                return View("Profile");
+            }
+            ViewBag.UpdatePasswordError = validationResult.Errors[0];
+            return View("Profile");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateUserInfo(UpdateUserDto model)
+        {
+            var validator = new UpdateUserInfoValidation();
+            var validationResult = await validator.ValidateAsync(model);
+            if (validationResult.IsValid)
+            {
+                var result = await _userService.UpdateUserInfoAsync(model);
+                if (result.Success)
+                {
+                    return RedirectToAction(nameof(Login));
+                }
+                ViewBag.UpdateUserError = result.Payload;
+                return View("Profile");
+            }
+            ViewBag.UpdateUserError = validationResult.Errors[0];
+            return View("Profile");
+        }
+
+        public async Task<IActionResult> Create()
+        {
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateUserDto model)
+        {
+            var validator = new CreateUserValidation();
+            var validationResult = await validator.ValidateAsync(model);
+            if (validationResult.IsValid)
+            {
+                var result = await _userService.CreateNewUserAsync(model);
+                if (result.Success)
+                {
+                    return RedirectToAction(nameof(GetAll));
+                }
+                ViewBag.UpdatePasswordError = result.Payload;
+                return View(model);
             }
             ViewBag.UpdatePasswordError = validationResult.Errors[0];
             return View();
