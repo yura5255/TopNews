@@ -157,5 +157,15 @@ namespace TopNews.Web.Controllers
             ViewBag.CreateUserError = response.Errors.Count() > 0 ? ((IdentityError)response.Errors.First()).Description : response.Message;
             return View();
         }
+
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            var result = await _userService.ConfirmEmailAsync(userId, token);
+            if (result.Success)
+            {
+                return Redirect(nameof(Login));
+            }
+            return Redirect(nameof(Login));
+        }
     }
 }

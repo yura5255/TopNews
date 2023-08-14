@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,11 +19,15 @@ namespace TopNews.Core.Services
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IMapper _mapper;
-        public UserService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IMapper mapper)
+        private readonly IConfiguration _configuration;
+        private readonly EmailService _emailService;
+        public UserService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IMapper mapper, EmailService emailService, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _mapper = mapper;
+            _emailService = emailService;
+            _configuration = configuration;
         }
         public async Task<ServiceResponse> SingOutUserAsync()
         {
@@ -202,6 +208,8 @@ namespace TopNews.Core.Services
             if (result.Succeeded)
             {
                 _userManager.AddToRoleAsync(mappedUser, model.Role).Wait();
+                //await _emailService.SendEmail(model.Email, "Hello!", "Hello World!");
+                await SendConfirmationEmailAsync(mappedUser);
                 return new ServiceResponse
                 {
                     Success = true,
@@ -248,6 +256,46 @@ namespace TopNews.Core.Services
             {
                 Success = false,
                 Message = "User a was found" 
+            };
+        }
+
+        public async Task SendConfirmationEmailAsync(AppUser user)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = Encoding.UTF8.GetBytes(token);
+            var validEmailToken = WebEncoders.Base64UrlEncode(encodedToken);
+            string url = $"{_configuration["HostSettings:URL"]}/Dashboard/ConfirmEmail?userId={user.Id}&token={validEmailToken}";
+            string emailBody = $"<h1>Confirm your email please!</h1><a href='{url}'>Confirm now</a>";
+            await _emailService.SendEmail(user.Email, "Email confirmation!", emailBody);
+        }
+
+        public async Task<ServiceResponse> ConfirmEmailAsync(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if(user == null)
+            {
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "User not found!"
+                };
+            }
+            var decodedToken = WebEncoders.Base64UrlDecode(token);
+            string normalToken = Encoding.UTF8.GetString(decodedToken);
+            var result = await _userManager.ConfirmEmailAsync(user, normalToken);
+            if(result.Succeeded)
+            {
+                return new ServiceResponse
+                {
+                    Success = true,
+                    Message = "Email succesfully confirmed!"
+                };
+            }
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = "Email not confirmed!",
+                Errors = result.Errors.Select(e => e.Description)
             };
         }
     }

@@ -37,15 +37,12 @@ namespace TopNews.Infrastructure.Initializers
                         {
                             Name = "Administrator",
                             NormalizedName = "ADMINISTRATOR"
+                        },
+                        new IdentityRole()
+                        {
+                            Name = "User",
+                            NormalizedName = "USER"
                         }
-                    );
-
-                    context.Roles.AddAsync(
-                       new IdentityRole()
-                       {
-                           Name = "User",
-                           NormalizedName = "USER"
-                       }
                    );
                     await context.SaveChangesAsync();
 
