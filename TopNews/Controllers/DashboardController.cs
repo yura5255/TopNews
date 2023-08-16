@@ -158,6 +158,7 @@ namespace TopNews.Web.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
             var result = await _userService.ConfirmEmailAsync(userId, token);
@@ -167,5 +168,45 @@ namespace TopNews.Web.Controllers
             }
             return Redirect(nameof(Login));
         }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword()
+        {
+            return View();
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            var result = await _userService.ForgotPasswordAsync(email);
+            if (result.Success)
+            {
+                ViewBag.AuthError = "Check your email.";
+                return View(nameof(Login));
+            }
+            ViewBag.AuthError = "Something went wrong.";
+            return View();
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword(string email, string token)
+        {
+            ViewBag.Email = email;
+            ViewBag.Token = token;
+            return View();
+        }
+
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto model)
+        {
+            var result = await _userService.ResetPasswordAsync(model);
+            ViewBag.Message = result.Message;
+            return View(nameof(Login));
+        }
+
+
     }
 }

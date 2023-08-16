@@ -298,5 +298,56 @@ namespace TopNews.Core.Services
                 Errors = result.Errors.Select(e => e.Description)
             };
         }
+
+        public async Task<ServiceResponse> ForgotPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ServiceResponse
+                {
+                    Message = "User exists.",
+                    Success = false,
+                };
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = Encoding.UTF8.GetBytes(token);
+            var validEmailToken = WebEncoders.Base64UrlEncode(encodedToken);
+
+            var url = $"{_configuration["HostSettings:URL"]}/Dashboard/ResetPassword?email={email}&token={validEmailToken}";
+
+            string emailBody = $"<h1>Follow the instruction for reset password.</h1><a href='{url}'>Reset now!</a>";
+            await _emailService.SendEmail(email, "Reset password for TopNews.", emailBody);
+
+            return new ServiceResponse
+            {
+                Success = true,
+                Message = "Email successfully sent."
+            };
+        }
+
+        public async Task<ServiceResponse> ResetPasswordAsync(ResetPasswordDto model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return new ServiceResponse
+                {
+                    Message = "Error.",
+                    Success = false,
+                };
+            }
+
+            var decodedToken = WebEncoders.Base64UrlDecode(model.Token);
+            string normalToken = Encoding.UTF8.GetString(decodedToken);
+            var result = await _userManager.ResetPasswordAsync(user, normalToken, model.Password);
+
+            return new ServiceResponse
+            {
+                Success = true,
+                Message = "Password succesfully reseted."
+            };
+        }
     }
 }
