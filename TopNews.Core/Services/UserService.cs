@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,16 +19,18 @@ namespace TopNews.Core.Services
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
         private readonly EmailService _emailService;
-        public UserService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IMapper mapper, EmailService emailService, IConfiguration configuration)
+        public UserService(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IMapper mapper, EmailService emailService, IConfiguration configuration, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _mapper = mapper;
             _emailService = emailService;
             _configuration = configuration;
+            _roleManager = roleManager;
         }
         public async Task<ServiceResponse> SingOutUserAsync()
         {
@@ -347,6 +350,89 @@ namespace TopNews.Core.Services
             {
                 Success = true,
                 Message = "Password succesfully reseted."
+            };
+        }
+
+        public async Task<List<IdentityRole>> GetAllRolesAsync()
+        {
+            List<IdentityRole> roles = await _roleManager.Roles.ToListAsync();
+            return roles;
+        }
+
+        public async Task<ServiceResponse> EditAsync(UpdateUserDto model)
+        {
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null)
+            {
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "User not found."
+                };
+            }
+
+            if (user.Email != model.Email)
+            {
+                user.EmailConfirmed = false;
+                user.Email = model.Email;
+                user.UserName = model.Email;
+                await SendConfirmationEmailAsync(user);
+            }
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.PhoneNumber = model.PhoneNumber;
+
+            var roles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, roles);
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, model.Role);
+
+                return new ServiceResponse
+                {
+                    Message = "User successfully updated.",
+                    Success = true
+                };
+            }
+
+            List<IdentityError> errorList = result.Errors.ToList();
+            string errors = "";
+
+            foreach (var error in errorList)
+            {
+                errors = errors + error.Description.ToString();
+            }
+            return new ServiceResponse
+            {
+                Message = errors,
+                Success = false
+            };
+
+        }
+
+        public async Task<ServiceResponse> GetUserByIdAsync(string Id)
+        {
+            var user = await _userManager.FindByIdAsync(Id);
+            if (user == null)
+            {
+
+                return new ServiceResponse
+                {
+                    Success = false,
+                    Message = "User or password incorrect."
+                };
+            }
+
+            var mappedUser = _mapper.Map<AppUser, UpdateUserDto>(user);
+
+            return new ServiceResponse
+            {
+                Success = true,
+                Message = "User succssfully loaded.",
+                Payload = mappedUser
             };
         }
     }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using TopNews.Core.DTOs.User;
 using TopNews.Core.Entities.User;
 using TopNews.Core.Services;
@@ -207,6 +208,48 @@ namespace TopNews.Web.Controllers
             return View(nameof(Login));
         }
 
+        public async Task<IActionResult> Edit(string id)
+        {
+
+            var result = await _userService.GetUserByIdAsync(id);
+            if (result.Success)
+            {
+                await LoadRoles();
+                return View(result.Payload);
+            }
+
+            return View(nameof(Index));
+        }
+
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        public async Task<IActionResult> Edit(UpdateUserDto model)
+        {
+            var validator = new UpdateUserValidation();
+            var validationResult = await validator.ValidateAsync(model);
+            if (validationResult.IsValid)
+            {
+                var result = await _userService.EditAsync(model);
+                if (result.Success)
+                {
+                    return View(nameof(Index));
+                }
+                return View(nameof(Index));
+            }
+
+            await LoadRoles();
+            ViewBag.AuthError = validationResult.Errors[0];
+            return View(nameof(Edit));
+        }
+
+        private async Task LoadRoles()
+        {
+            var result = await _userService.GetAllRolesAsync();
+            @ViewBag.RoleList = new SelectList(
+          (System.Collections.IEnumerable)result, nameof(IdentityRole.Name),
+              nameof(IdentityRole.Name)
+              );
+        }
 
     }
 }
