@@ -1,0 +1,86 @@
+﻿@{
+    ViewData["Title"] = "Categories";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+@using Microsoft.AspNetCore.Identity;
+@using TopNews.Core.DTOs.Category;
+@using TopNews.Core.DTOs.User;
+@using TopNews.Core.Entities.User;
+@model List<CategoryDto>
+@{
+    <link rel="stylesheet" href="~/dashboard/plugins/jsgrid/jsgrid.min.css">
+    <link rel="stylesheet" href="~/dashboard/plugins/jsgrid/jsgrid-theme.min.css">
+}
+
+
+
+<section class="content-wrapper">
+    <!-- Main content -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Users</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a asp-controller="Dashboard" asp-action="Index">Home</a></li>
+                        <li class="breadcrumb-item active">Categories</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+
+
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Categories</h3>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body">
+                            <table id="example2" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        @if (@User.IsInRole("Administrator"))
+                                        {
+                                            <th>Edit</th>
+                                            <th>Delete</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var category in Model)
+                                    {
+                                        <tr>
+                                            <td>@category.Name</td>
+                                            @if (@User.IsInRole("Administrator"))
+                                            {
+                                                <td><a asp-controller="Categories" asp-action="Edit" asp-route-id="@category.Id" class="btn btn-block btn-warning btn-sm">Edit</a></td>
+                                                <td><a asp-controller="Categories" asp-action="Delete" asp-route-id="@category.Id" class="btn btn-block btn-danger btn-sm">Delete</a></td>
+                                            }
+                                        </tr>
+                                    }
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                    <!-- /.content -->
+                    <!-- /.content-wrapper -->
+                    <!-- Control Sidebar -->
+                    <aside class="control-sidebar control-sidebar-dark">
+                        <!-- Control sidebar content goes here -->
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>

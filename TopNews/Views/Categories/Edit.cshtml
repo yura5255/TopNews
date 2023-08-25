@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Categories";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+﻿@using TopNews.Core.DTOs.Category;
+@model CategoryDto;
+<section class="min-vh-100 mb-8">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-4 col-lg-5 col-md-7 mx-auto">
+                <div class="card z-index-0">
+                    <div class="text-center pt-4">
+                        <h5>Edit category information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form role="form text-left" method="post" asp-controller="Categories" asp-action="Edit">
+                            @if (@ViewBag.AuthError != null)
+                            {
+                                <span class="text-danger">@ViewBag.AuthError</span>
+                            }
+                            <div class="mb-3">
+                                <label>New name category</label>
+                                <input asp-for="Id" type="hidden" class="form-control" aria-label="Id" aria-describedby="email-addon" />
+                                <input asp-for="Name" type="text" class="form-control" placeholder="New name category" aria-label="New name category" value="@Model.Name">
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn bg-gradient-dark w-100 my-4 mb-2">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

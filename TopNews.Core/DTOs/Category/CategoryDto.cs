@@ -3,17 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TopNews.Core.Interfaces;
 
-namespace TopNews.Core.Entities.Site
+namespace TopNews.Core.DTOs.Category
 {
-    public class Category : IEntity
+    public class CategoryDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public override string ToString()
-        {
-            return Name;
-        }
     }
 }
