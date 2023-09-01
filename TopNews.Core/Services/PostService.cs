@@ -22,7 +22,7 @@ namespace TopNews.Core.Services
         private readonly IMapper _mapper;
         private readonly IRepository<Post> _postRepo;
 
-        public PostService(IRepository<Post> postRepo, IMapper mapper, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
+        public PostService(IConfiguration configuration, IRepository<Post> postRepo, IMapper mapper, IWebHostEnvironment webHostEnvironment)
         {
             _mapper = mapper;
             _postRepo = postRepo;
@@ -37,14 +37,13 @@ namespace TopNews.Core.Services
                 string webRootPath = _webHostEnvironment.WebRootPath;
                 string upload = webRootPath + _configuration.GetValue<string>("ImageSettings:ImagePath");
                 var files = model.File;
-                var fileName = Guid.NewGuid().ToString();
-                string extansions = Path.GetExtension(files[0].FileName);
-                using (var fileStream = new FileStream(Path.Combine(upload, fileName + extansions), FileMode.Create))
+                string fileName = Guid.NewGuid().ToString();
+                string extensions = Path.GetExtension(files[0].FileName);
+                using (var fileStream = new FileStream(Path.Combine(upload, fileName + extensions), FileMode.Create))
                 {
                     files[0].CopyTo(fileStream);
                 }
-
-                model.ImagePath = fileName + extansions;
+                model.ImagePath = fileName + extensions;
             }
             else
             {
@@ -54,7 +53,29 @@ namespace TopNews.Core.Services
             DateTime currentDate = DateTime.Today;
             string formatedDate = currentDate.ToString("d");
             model.PublishDate = formatedDate;
-            await _postRepo.Insert(_mapper.Map<Post>(model));
+            Post newpost = _mapper.Map<Post>(model);
+            newpost.Category = null;
+            await _postRepo.Insert(newpost);
+            await _postRepo.Save();
+        }
+
+        public async Task Delete(int id)
+        {
+            var currentPost = await Get(id);
+
+            if (currentPost == null) return; // exception
+
+            string webPathRoot = _webHostEnvironment.WebRootPath;
+            string upload = webPathRoot + _configuration.GetValue<string>("ImageSettings:ImagePath");
+
+            string existingFilePath = Path.Combine(upload, currentPost.ImagePath);
+
+            if (File.Exists(existingFilePath) && currentPost.ImagePath != "Default.png")
+            {
+                File.Delete(existingFilePath);
+            }
+
+            await _postRepo.Delete(id);
             await _postRepo.Save();
         }
 
@@ -69,10 +90,69 @@ namespace TopNews.Core.Services
             return _mapper.Map<PostDto>(post);
         }
 
+        public async Task<List<PostDto>> GetAll()
+        {
+            var result = await _postRepo.GetListBySpec(new Posts.All());//.ToList();
+            return _mapper.Map<List<PostDto>>(result);
+        }
+
         public async Task<List<PostDto>> GetByCategory(int id)
         {
             var result = await _postRepo.GetListBySpec(new Posts.ByCategory(id));
             return _mapper.Map<List<PostDto>>(result);
+        }
+
+        public async Task<PostDto> GetById(int id)
+        {
+            if (id < 0) return null; // exception handling
+
+            var post = await _postRepo.GetByID(id);
+
+            if (post == null) return null; // exception handling
+
+            return _mapper.Map<PostDto>(post);
+        }
+
+        public async Task<List<PostDto>> Search(string searchString)
+        {
+            var result = await _postRepo.GetListBySpec(new Posts.Search(searchString));
+            return _mapper.Map<List<PostDto>>(result);
+        }
+
+        public async Task Update(PostDto model)
+        {
+            var currentPost = await _postRepo.GetByID(model.Id);
+            if (model.File.Count > 0)
+            {
+                string webPathRoot = _webHostEnvironment.WebRootPath;
+                string upload = webPathRoot + _configuration.GetValue<string>("ImageSettings:ImagePath");
+
+                string existingFilePath = Path.Combine(upload, currentPost.ImagePath);
+
+                if (File.Exists(existingFilePath) && model.ImagePath != "Default.png")
+                {
+                    File.Delete(existingFilePath);
+                }
+
+                var files = model.File;
+
+                string fileName = Guid.NewGuid().ToString();
+                string extension = Path.GetExtension(files[0].FileName);
+                using (var fileStream = new FileStream(Path.Combine(upload, fileName + extension), FileMode.Create))
+                {
+                    files[0].CopyTo(fileStream);
+                }
+                model.ImagePath = fileName + extension;
+
+            }
+            else
+            {
+                model.ImagePath = currentPost.ImagePath;
+            }
+            Post newpost = _mapper.Map<Post>(model);
+            newpost.Category = null;
+            await _postRepo.Update(newpost);
+            await _postRepo.Save();
         }
     }
 }
