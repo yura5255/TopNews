@@ -1,0 +1,24 @@
+﻿@using TopNews.Core.DTOs.Post;
+@model PostDto
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-3">
+            @if (Model.ImagePath == "Default.png")
+            {
+                    <img class="img-fluid" src="~/images/posts/Default.png" alt="Photo">
+            }
+            else
+            {
+                    <img class="img-fluid" src="~/images/posts/@Model.ImagePath" alt="Photo">
+            }
+        </div>
+        <div class="col-md-9">
+            <h1>@Model.Title</h1>
+            <p>Publish Date : @Model.PublishDate / Category : @Model.CategoryName</p>
+            <p class="mb-0">@Html.Raw(Model.Description)</p>
+            <p></p>
+            <p class="mb-0">@Html.Raw(Model.FullText)</p>
+        </div>
+    </div>
+</div>
