@@ -42,17 +42,43 @@ namespace TopNews.Web.Controllers
         [Authorize(Roles = "Administrator")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PostDto model)
+        public async Task<IActionResult> Create(PostDto model, IFormFile croppedImage)
         {
             var validator = new CreatePostValidation();
             var validatinResult = await validator.ValidateAsync(model);
+
             if (validatinResult.IsValid)
             {
-                var files = HttpContext.Request.Form.Files;
-                model.File = files;
-                await _postService.Create(model);
-                return RedirectToAction("Index", "Post");
+                try
+                {
+                    // Handle the cropped image data
+                    if (croppedImage != null && croppedImage.Length > 0)
+                    {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await croppedImage.CopyToAsync(memoryStream);
+
+                            // Process and save the cropped image (e.g., store it in a database or file system)
+                            byte[] imageBytes = memoryStream.ToArray();
+
+                            // You can save the image using your service or repository
+                            // Example: await _imageService.SaveCroppedImageAsync(imageBytes, "imageName.jpg");
+                        }
+                    }
+
+                    // Continue with post creation
+                    await _postService.Create(model);
+
+                    return RedirectToAction("Index", "Post");
+                }
+                catch (Exception ex)
+                {
+                    // Handle any exceptions that may occur during image processing or post creation
+                    ViewBag.AuthError = "An error occurred while creating the post.";
+                    return View();
+                }
             }
+
             ViewBag.AuthError = validatinResult.Errors[0];
             return View();
         }
