@@ -41,6 +41,7 @@ namespace TopNews.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(DTOUserLogin model)
         {
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
             var validator = new LoginUserValidation();
             var validationResult = validator.Validate(model);
             if (validationResult.IsValid) 

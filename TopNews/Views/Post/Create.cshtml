@@ -5,6 +5,7 @@
     ViewData["Title"] = "Posts";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
     <link rel="stylesheet" href="~/dashboard/plugins/summernote/summernote-bs4.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css" />
 }
 
 <div class="content-wrapper">
@@ -25,7 +26,6 @@
         </div><!-- /.container-fluid -->
     </section>
 
-    <!-- Main content -->
     <section class="content">
         <div class="container-fluid">
             <!-- SELECT2 EXAMPLE -->
@@ -77,9 +77,19 @@
                                             <label>Image</label>
                                             <div class=" input-group">
                                                 <div class="custom-file">
-                                                    
+                                                    <div class="custom-file">
+                                                        <input type="file" id="Image" name="files" asp-for="@Model.File" class="custom-file-input" />
+                                                        <label class="custom-file-label">Choose file...</label>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Cropped Image</label>
+                                            <div id="croppedImage"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button type="button" id="cropButton" class="btn btn-primary">Crop Image</button>
                                         </div>
                                         <div class="card-footer">
                                             <button type="submit" class="btn btn-primary">Create</button>
@@ -99,60 +109,13 @@
     <!-- /.content -->
 </div>
 
-@section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.11/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.11/cropper.min.js"></script>
 
-    <script>
-        $(document).ready(function () {
-            var imageInput = document.getElementById('imageInput');
-            var cropperContainer = document.getElementById('cropperContainer');
-            var cropperImage = document.getElementById('cropperImage');
-            var cropButton = document.getElementById('cropButton');
-            var croppedImageDataInput = document.getElementById('croppedImageData');
-            var cropper;
 
-            // Initialize Cropper.js when an image is selected
-            imageInput.addEventListener('change', function () {
-                if (imageInput.files && imageInput.files[0]) {
-                    var reader = new FileReader();
 
-                    reader.onload = function (e) {
-                        // Set the source of the Cropper.js image
-                        cropperImage.src = e.target.result;
+@section Scripts{
+    <script src="~/dashboard/plugins/summernote/summernote-bs5.min.js"></script>
 
-                        // Initialize Cropper.js with the image element
-                        cropper = new Cropper(cropperImage, {
-                            aspectRatio: 1, // Set the desired aspect ratio
-                            viewMode: 2,   // Set the view mode (0, 1, 2, 3)
-                        });
-
-                        // Show the cropping area
-                        cropperContainer.style.display = 'block';
-                    };
-
-                    // Read the selected image
-                    reader.readAsDataURL(imageInput.files[0]);
-                }
-            });
-
-            // Handle cropping when the "Crop Image" button is clicked
-            cropButton.addEventListener('click', function () {
-                if (cropper) {
-                    // Get the cropped canvas
-                    var croppedCanvas = cropper.getCroppedCanvas();
-
-                    // Get the cropped image data as a base64-encoded string
-                    var croppedData = croppedCanvas.toDataURL('image/jpeg'); // Adjust format as needed
-
-                    // Set the cropped image data in the hidden field
-                    croppedImageDataInput.value = croppedData;
-
-                    // Hide the cropping area
-                    cropperContainer.style.display = 'none';
-                }
-            });
+    <script type="text/javascript">
         $(function () {
             $('#summernote').summernote({
                 minHeight: 200
@@ -162,6 +125,96 @@
                 minHeight: 200
             })
         })
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+    <script>
+        $(function () {
+            var $imageInput = $('#Image');
+            var $croppedImage = $('#croppedImage');
+            var $cropper;
+
+            // Зберігаємо обрізане зображення на клієнті
+            var croppedImageData = null;
+
+            // Ініціалізуємо Croppie при виборі файлу
+            $imageInput.on('change', function () {
+                var files = this.files;
+                var file;
+
+                if (files && files.length) {
+                    file = files[0];
+
+                    if (/^image\/\w+$/.test(file.type)) {
+                        if ($cropper) {
+                            $cropper.destroy();
+                        }
+
+                        $croppedImage.empty();
+
+                        $cropper = new Croppie($croppedImage[0], {
+                            viewport: { width: 200, height: 200 },
+                            boundary: { width: 300, height: 300 },
+                            aspectRatio: 1,
+                            viewMode: 2,
+                            responsive: true,
+                            crop: function (event) {
+                                // Під час обрізки зберігаємо обрізане зображення на клієнті
+                                $cropper.result('base64').then(function (base64) {
+                                    croppedImageData = base64;
+                                });
+                            }
+                        });
+
+                        var reader = new FileReader();
+
+                        reader.onload = function (e) {
+                            $cropper.bind({
+                                url: e.target.result
+                            });
+                        };
+
+                        reader.readAsDataURL(file);
+                    } else {
+                        alert('Будь ласка, виберіть зображення.');
+                    }
+                }
+            });
+
+            $('#cropButton').on('click', function () {
+                if ($cropper) {
+                    // Очікуємо завершення операції і виводимо дані тільки після цього
+                    $cropper.result('base64').then(function (base64) {
+                        croppedImageData = base64;
+
+                        // Створюємо новий об'єкт DataTransfer
+                        let dataTransfer = new DataTransfer();
+
+                        // Створюємо новий Blob з даними з Croppie (виправте тип та розширення, якщо потрібно)
+                        let blob = dataURItoBlob(croppedImageData);
+
+                        console.log(blob);
+
+                        // Створюємо новий файл і додаємо його до DataTransfer
+                        let file = new File([blob], "filename.png", { type: 'image/png' }); // Встановіть правильний тип і розширення файлу
+                        dataTransfer.items.add(file);
+
+                        // Оновлюємо FileList в інпуті
+                        var inputElement = document.getElementById('Image'); // Замініть 'Image' на id вашого інпуту
+                        inputElement.files = dataTransfer.files;
+                    });
+                }
+            });
+            function dataURItoBlob(dataURI) {
+                var byteString = atob(dataURI.split(',')[1]);
+                var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+                var ab = new ArrayBuffer(byteString.length);
+                var ia = new Uint8Array(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                return new Blob([ab], { type: mimeString });
+            }
         });
     </script>
-}                                       
+    }

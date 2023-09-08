@@ -38,48 +38,28 @@ namespace TopNews.Web.Controllers
             await LoadCategories();
             return View();
         }
-
-        [Authorize(Roles = "Administrator")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PostDto model, IFormFile croppedImage)
+        public async Task<IActionResult> Create(PostDto model)
         {
             var validator = new CreatePostValidation();
-            var validatinResult = await validator.ValidateAsync(model);
+            var validationResult = await validator.ValidateAsync(model);
 
-            if (validatinResult.IsValid)
+            if (validationResult.IsValid)
             {
-                try
-                {
-                    // Handle the cropped image data
-                    if (croppedImage != null && croppedImage.Length > 0)
-                    {
-                        using (var memoryStream = new MemoryStream())
-                        {
-                            await croppedImage.CopyToAsync(memoryStream);
+                //byte[] fileBytes = Convert.FromBase64String(CroppedImageData);
+                //IFormFile croppedImageFile = new FormFile(new MemoryStream(fileBytes), 0, fileBytes.Length, "CroppedImage", "cropped-image.jpg");
 
-                            // Process and save the cropped image (e.g., store it in a database or file system)
-                            byte[] imageBytes = memoryStream.ToArray();
-
-                            // You can save the image using your service or repository
-                            // Example: await _imageService.SaveCroppedImageAsync(imageBytes, "imageName.jpg");
-                        }
-                    }
-
-                    // Continue with post creation
-                    await _postService.Create(model);
-
-                    return RedirectToAction("Index", "Post");
-                }
-                catch (Exception ex)
-                {
-                    // Handle any exceptions that may occur during image processing or post creation
-                    ViewBag.AuthError = "An error occurred while creating the post.";
-                    return View();
-                }
+                // Create an IFormFileCollection and add the cropped image to it
+                //var formFiles = new FormFileCollection();
+                //formFiles.Add(croppedImageFile);
+                var files = HttpContext.Request.Form.Files;
+                model.File = files;
+                //model.File = formFiles;
+                await _postService.Create(model);
+                return RedirectToAction("Index", "Post");
             }
-
-            ViewBag.AuthError = validatinResult.Errors[0];
+            ViewBag.Errors = validationResult.Errors[0];
             return View();
         }
 
