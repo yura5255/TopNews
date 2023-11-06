@@ -51,7 +51,7 @@ pipeline  {
             steps {
                 echo " ============== pushing image =================="
                 sh '''
-                docker run -d --name yura525 -p 80:80 yura525/topnews:latest
+                docker run -d --name topnews -p 80:80 yura525/topnews:latest
                 '''
             }
         }
