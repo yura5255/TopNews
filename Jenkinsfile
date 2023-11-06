@@ -25,7 +25,7 @@ pipeline  {
             steps {
                 echo 'Creating docker image ...'
                 dir('.'){
-                    sh "docker build -t macnaer/walter . "
+                    sh "docker build -t yura525/topnews . "
                 }
             }
         }
@@ -43,7 +43,7 @@ pipeline  {
             steps {
                 echo " ============== pushing image =================="
                 sh '''
-                docker push macnaer/walter:latest
+                docker push yura525/topnews:latest
                 '''
             }
         }
@@ -51,7 +51,7 @@ pipeline  {
             steps {
                 echo " ============== pushing image =================="
                 sh '''
-                docker run -d --name walter -p 80:80 macnaer/walter:latest
+                docker run -d --name yura525 -p 80:80 yura525/topnews:latest
                 '''
             }
         }
